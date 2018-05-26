@@ -46,30 +46,7 @@ public enum StreamingExchangeFactory {
 
         LOG.debug("Creating default exchange from class name");
 
-        // Attempt to create an instance of the exchange provider
-        try {
-
-            // Attempt to locate the exchange provider on the classpath
-            Class exchangeProviderClass = Class.forName(exchangeClassName);
-
-            // Test that the class implements Exchange
-            if (Exchange.class.isAssignableFrom(exchangeProviderClass)) {
-                // Instantiate through the default constructor and use the default exchange specification
-                StreamingExchange exchange = (StreamingExchange) exchangeProviderClass.newInstance();
-                return exchange;
-            } else {
-                throw new ExchangeException("Class '" + exchangeClassName + "' does not implement Exchange");
-            }
-        } catch (ClassNotFoundException e) {
-            throw new ExchangeException("Problem creating Exchange (class not found)", e);
-        } catch (InstantiationException e) {
-            throw new ExchangeException("Problem creating Exchange (instantiation)", e);
-        } catch (IllegalAccessException e) {
-            throw new ExchangeException("Problem creating Exchange (illegal access)", e);
-        }
-
-        // Cannot be here due to exceptions
-
+        return createExchangeProvider(exchangeClassName);
     }
 
     /**
@@ -101,7 +78,12 @@ public enum StreamingExchangeFactory {
         LOG.debug("Creating exchange from specification");
 
         String exchangeClassName = exchangeSpecification.getExchangeClassName();
+        StreamingExchange exchange = createExchangeProvider(exchangeClassName);
+        exchange.applySpecification(exchangeSpecification);
+        return exchange;
+    }
 
+    private StreamingExchange createExchangeProvider(String exchangeClassName) {
         // Attempt to create an instance of the exchange provider
         try {
 
@@ -110,23 +92,19 @@ public enum StreamingExchangeFactory {
 
             // Test that the class implements Exchange
             if (Exchange.class.isAssignableFrom(exchangeProviderClass)) {
-                // Instantiate through the default constructor
+                // Instantiate through the default constructor and use the default exchange specification
                 StreamingExchange exchange = (StreamingExchange) exchangeProviderClass.newInstance();
-                exchange.applySpecification(exchangeSpecification);
                 return exchange;
             } else {
                 throw new ExchangeException("Class '" + exchangeClassName + "' does not implement Exchange");
             }
         } catch (ClassNotFoundException e) {
-            throw new ExchangeException("Problem starting exchange provider (class not found)", e);
+            throw new ExchangeException("Problem creating Exchange (class not found)", e);
         } catch (InstantiationException e) {
-            throw new ExchangeException("Problem starting exchange provider (instantiation)", e);
+            throw new ExchangeException("Problem creating Exchange (instantiation)", e);
         } catch (IllegalAccessException e) {
-            throw new ExchangeException("Problem starting exchange provider (illegal access)", e);
+            throw new ExchangeException("Problem creating Exchange (illegal access)", e);
         }
-
-        // Cannot be here due to exceptions
-
     }
 
 }
